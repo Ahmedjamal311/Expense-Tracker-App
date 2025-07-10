@@ -31,6 +31,11 @@ def view_transactions():
     cursor = connect.cursor()
     cursor.execute('SELECT * FROM transactions')
     transactions = cursor.fetchall()
+    if not transactions:
+        print("No expenses found")
+    else:
+        return transactions
+    connect.commit()
     connect.close()
     return transactions
     
@@ -46,16 +51,22 @@ def view_category(category):
     cursor = connect.cursor()
     cursor.execute('SELECT FROM transactions WHERE category = ?', (category))
     transactions = cursor.fetchall()
+    if not transactions:
+        print("No expenses found in " + category)
+    else:
+        return transactions
     connect.commit()
     connect.close()
-    return transactions
 
 def spent_category(category):
     connect = sqlite3.connect('FinanceManager.db')
     cursor = connect.cursor()
     cursor.execute('SELECT amount FROM transactions WHERE category = ? AND type = "expense"' , (category))
     transactions = cursor.fetchall()
-    total = sum(transaction[0] for transaction in transactions)
+    if not transactions:
+        print("No expenses found in " + category)
+    else:
+        total = sum(transaction[0] for transaction in transactions)
+        return total
     connect.commit()
     connect.close()
-    return total
