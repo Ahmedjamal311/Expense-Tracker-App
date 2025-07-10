@@ -1,10 +1,8 @@
 import sqlite3
 
-# Connect to SQLite database
 connect = sqlite3.connect('FinanceManager.db')
 cursor = connect.cursor()
 
-# Create transactions table
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,3 +40,22 @@ def remove_transaction(id):
     cursor.execute('DELETE FROM transactions WHERE id = ?', (id))  
     connect.commit()
     connect.close()
+
+def view_category(category):
+    connect = sqlite3.connect('FinanceManager.db')
+    cursor = connect.cursor()
+    cursor.execute('SELECT FROM transactions WHERE category = ?', (category))
+    transactions = cursor.fetchall()
+    connect.commit()
+    connect.close()
+    return transactions
+
+def spent_category(category):
+    connect = sqlite3.connect('FinanceManager.db')
+    cursor = connect.cursor()
+    cursor.execute('SELECT amount FROM transactions WHERE category = ? AND type = "expense"' , (category))
+    transactions = cursor.fetchall()
+    total = sum(transaction[0] for transaction in transactions)
+    connect.commit()
+    connect.close()
+    return total
