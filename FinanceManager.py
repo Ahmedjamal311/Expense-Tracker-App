@@ -14,16 +14,21 @@ connect.commit()
 connect.close()
 
 def add_transaction(type, category, amount, date):
-    connect = sqlite3.connect('FinanceManager.db')
-    cursor = connect.cursor()
-    cursor.execute('''
-    INSERT INTO transactions (type, category, amount, date)
-    VALUES (?, ?, ?, ?)
-    ''', (type, category, amount, date))
-    connect.commit()
-    connect.close()
+    if not (type == 'expense' or type == 'income'):
+        raise ValueError("Type is not specified as income or expense")
+    elif amount <= 0:
+        raise ValueError("Amount must be positive")
+    else:
+        connect = sqlite3.connect('FinanceManager.db')
+        cursor = connect.cursor()
+        cursor.execute('''
+        INSERT INTO transactions (type, category, amount, date)
+        VALUES (?, ?, ?, ?)
+        ''', (type, category, amount, date))
+        connect.commit()
+        connect.close()
 
-def view_transactions():
+def view_all_transactions():
     connect = sqlite3.connect('FinanceManager.db')
     cursor = connect.cursor()
     cursor.execute('SELECT * FROM transactions')
@@ -37,14 +42,14 @@ def view_transactions():
 def remove_transaction(id):
     connect = sqlite3.connect('FinanceManager.db')
     cursor = connect.cursor()
-    cursor.execute('DELETE FROM transactions WHERE id = ?', (id))  
+    cursor.execute('DELETE FROM transactions WHERE id = ?', (id,))  
     connect.commit()
     connect.close()
 
 def view_category(category):
     connect = sqlite3.connect('FinanceManager.db')
     cursor = connect.cursor()
-    cursor.execute('SELECT FROM transactions WHERE category = ?', (category))
+    cursor.execute('SELECT *FROM transactions WHERE category = ?', (category))
     transactions = cursor.fetchall()
     connect.commit()
     connect.close()
@@ -63,3 +68,28 @@ def spent_category(category):
         print("No expenses found in " + category)
     total = sum(transaction[0] for transaction in transactions)
     return total
+
+def view_transactions_by_date(start_date, end_date):
+    connect = sqlite3.connect('FinanceManager.db')
+    cursor = connect.cursor()
+    cursor.execute('''
+    SELECT * FROM transactions WHERE date BETWEEN ? AND ?''', 
+    (start_date, end_date))
+    transactions = cursor.fetchall()
+    connect.commit()
+    connect.close()
+    if not transactions:
+        print("No expenses found between " + start_date + " and " + end_date)
+    return transactions
+
+def edit_transaction(id, new_amount, new_category):
+    if new_amount <= 0:
+        raise ValueError("Amount must be positive")
+    else:
+        connect = sqlite3.connect('FinanceManager.db')
+        cursor = connect.cursor()
+        cursor.execute('''
+        UPDATE transactions SET amount=?, category=?
+        WHERE id=?''', (new_amount, new_category, id))
+        connect.commit()
+        connect.close()
