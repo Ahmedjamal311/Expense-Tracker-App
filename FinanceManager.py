@@ -1,17 +1,17 @@
 import sqlite3
 
-connect = sqlite3.connect('FinanceManager.db')
+connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
 cursor = connect.cursor()
 cursor.execute('''
-CREATE TABLE IF NOT EXISTS transactions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    type TEXT,
-    category TEXT,       
-    amount REAL,         
-    date TEXT,           
-)''')
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT,
+            category TEXT,       
+            amount REAL,         
+            date DATE           
+        )''')
 connect.commit()
-connect.close()
+connect.close() 
 
 def add_transaction(type, category, amount, date):
     if not (type == 'expense' or type == 'income'):
@@ -19,7 +19,7 @@ def add_transaction(type, category, amount, date):
     elif amount <= 0:
         raise ValueError("Amount must be positive")
     else:
-        connect = sqlite3.connect('FinanceManager.db')
+        connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
         cursor = connect.cursor()
         cursor.execute('''
         INSERT INTO transactions (type, category, amount, date)
@@ -29,7 +29,7 @@ def add_transaction(type, category, amount, date):
         connect.close()
 
 def view_all_transactions():
-    connect = sqlite3.connect('FinanceManager.db')
+    connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
     cursor = connect.cursor()
     cursor.execute('SELECT * FROM transactions')
     transactions = cursor.fetchall()
@@ -40,16 +40,16 @@ def view_all_transactions():
     return transactions
     
 def remove_transaction(id):
-    connect = sqlite3.connect('FinanceManager.db')
+    connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
     cursor = connect.cursor()
     cursor.execute('DELETE FROM transactions WHERE id = ?', (id,))  
     connect.commit()
     connect.close()
 
 def view_category(category):
-    connect = sqlite3.connect('FinanceManager.db')
+    connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
     cursor = connect.cursor()
-    cursor.execute('SELECT *FROM transactions WHERE category = ?', (category))
+    cursor.execute('SELECT * FROM transactions WHERE category = ?', (category))
     transactions = cursor.fetchall()
     connect.commit()
     connect.close()
@@ -58,7 +58,7 @@ def view_category(category):
     return transactions
 
 def spent_category(category):
-    connect = sqlite3.connect('FinanceManager.db')
+    connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
     cursor = connect.cursor()
     cursor.execute('SELECT amount FROM transactions WHERE category = ? AND type = "expense"', (category))
     transactions = cursor.fetchall()
@@ -70,7 +70,7 @@ def spent_category(category):
     return total
 
 def view_transactions_by_date(start_date, end_date):
-    connect = sqlite3.connect('FinanceManager.db')
+    connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
     cursor = connect.cursor()
     cursor.execute('''
     SELECT * FROM transactions WHERE date BETWEEN ? AND ?''', 
@@ -86,10 +86,15 @@ def edit_transaction(id, new_amount, new_category):
     if new_amount <= 0:
         raise ValueError("Amount must be positive")
     else:
-        connect = sqlite3.connect('FinanceManager.db')
+        connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
         cursor = connect.cursor()
         cursor.execute('''
         UPDATE transactions SET amount=?, category=?
         WHERE id=?''', (new_amount, new_category, id))
         connect.commit()
         connect.close()
+
+i = 21
+while i <= 40:
+    remove_transaction(i)
+    i += 1
