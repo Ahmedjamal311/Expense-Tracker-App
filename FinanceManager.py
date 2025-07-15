@@ -28,7 +28,7 @@ def add_transaction(type, category, amount, date):
         connect.commit()
         connect.close()
 
-def view_all_transactions():
+def select_all_transactions():
     connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
     cursor = connect.cursor()
     cursor.execute('SELECT * FROM transactions')
@@ -46,7 +46,7 @@ def remove_transaction(id):
     connect.commit()
     connect.close()
 
-def view_category(category):
+def select_category(category):
     connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
     cursor = connect.cursor()
     cursor.execute('SELECT * FROM transactions WHERE category = ?', (category))
@@ -60,7 +60,7 @@ def view_category(category):
 def spent_category(category):
     connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
     cursor = connect.cursor()
-    cursor.execute('SELECT amount FROM transactions WHERE category = ? AND type = "expense"', (category))
+    cursor.execute('SELECT amount FROM transactions WHERE category = ? AND type = "expense"', (category,))
     transactions = cursor.fetchall()
     connect.commit()
     connect.close()
@@ -69,7 +69,7 @@ def spent_category(category):
     total = sum(transaction[0] for transaction in transactions)
     return total
 
-def view_transactions_by_date(start_date, end_date):
+def select_transactions_by_date(start_date, end_date):
     connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
     cursor = connect.cursor()
     cursor.execute('''
@@ -94,7 +94,3 @@ def edit_transaction(id, new_amount, new_category):
         connect.commit()
         connect.close()
 
-i = 21
-while i <= 40:
-    remove_transaction(i)
-    i += 1
