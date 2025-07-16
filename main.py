@@ -1,4 +1,18 @@
 import sqlite3
+import sys
+from PyQt6.QtWidgets import QApplication, QMessageBox
+from app import ExpenseApp
+
+def main():
+    app = QApplication(sys.argv)
+
+    window = ExpenseApp()
+    window.show()
+
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
 
 connect = sqlite3.connect('Finance-Manager-Project\FinanceManager.db')
 cursor = connect.cursor()
@@ -93,4 +107,3 @@ def edit_transaction(id, new_amount, new_category):
         WHERE id=?''', (new_amount, new_category, id))
         connect.commit()
         connect.close()
-
