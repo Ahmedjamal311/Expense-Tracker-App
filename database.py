@@ -19,3 +19,31 @@ def init_db(db_name):
                """)
     
     return True
+
+def fetch_expenses():
+    query = QSqlQuery("SELECT * FROM expenses ORDER BY date DESC")
+    expenses = []
+    while query.next():
+        row = [query.value(i) for i in range(5)]
+        expenses.append(row)
+    return expenses
+
+def add_expenses(date, category, amount, description):
+    query = QSqlQuery()
+    query.prepare("""
+                  INSERT INTO expenses (date, category, amount, description)
+                  VALUES (?, ?, ?, ?)
+                  """)
+    
+    query.addBindValue(date)
+    query.addBindValue(category)
+    query.addBindValue(amount)
+    query.addBindValue(description)
+
+    return query.exec()
+
+def delete_expenses(expense_id):
+    query = QSqlQuery()
+    query.prepare("DELETE FROM expenses WHERE id = ?")
+    query.addBindValue(expense_id)
+    return query.exec()
