@@ -47,3 +47,18 @@ def delete_expenses(expense_id):
     query.prepare("DELETE FROM expenses WHERE id = ?")
     query.addBindValue(expense_id)
     return query.exec()
+
+def fetch_category_expenses(category):
+    query = QSqlQuery()
+    query.prepare("SELECT * FROM expenses WHERE category = :category ORDER BY date DESC")
+    query.bindValue(":category", category)
+
+    if not query.exec():
+        print("Query failed:", query.lastError().text())
+        return []
+
+    expenses = []
+    while query.next():
+        row = [query.value(i) for i in range(5)]
+        expenses.append(row)
+    return expenses

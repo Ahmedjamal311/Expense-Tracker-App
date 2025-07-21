@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QLineEdit, QComboBox, QDateEdit, QTableWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QTableWidgetItem, QHeaderView
 
-from PyQt6.QtCore import QDate, Qt
-from database import fetch_expenses, add_expenses, delete_expenses
+from PyQt6.QtCore import QDate
+from database import fetch_expenses, add_expenses, delete_expenses, fetch_category_expenses
 
 class ExpenseApp(QWidget):
     def __init__(self):
@@ -32,6 +32,10 @@ class ExpenseApp(QWidget):
 
         self.btn_add.clicked.connect(self.add_expense)
         self.btn_delete.clicked.connect(self.delete_expense)
+        self.filter_dropdown = QComboBox()
+        self.filter_dropdown.addItem("All Categories")
+        self.filter_dropdown.addItems(["Food", "Rent", "Bills", "Entertainment", "Shopping", "Other"])
+        self.filter_dropdown.currentTextChanged.connect(self.filter_expenses)
 
         self.setup_layout()
         self.show()
@@ -54,6 +58,8 @@ class ExpenseApp(QWidget):
 
         row3.addWidget(self.btn_add)
         row3.addWidget(self.btn_delete)
+        row3.addWidget(QLabel("Filter by:"))
+        row3.addWidget(self.filter_dropdown)
 
         master.addLayout(row1)
         master.addLayout(row2)
@@ -107,3 +113,19 @@ class ExpenseApp(QWidget):
 
         if confirm == QMessageBox.StandardButton.Yes and delete_expenses(expense_id):
             self.load_table_data()
+    
+    def filter_expenses(self):
+        selected_category = self.filter_dropdown.currentText()
+        categories = ["Food", "Rent", "Bills", "Entertainment", "Shopping", "Other"]
+        if selected_category in categories:
+            expenses = fetch_category_expenses(selected_category)
+        elif selected_category == "All Categories": 
+            expenses = fetch_expenses()
+        else:
+            QMessageBox.warning(self, "Error", "Category not found")
+            return
+        self.table.setRowCount(0)
+        for row_idx, expense in enumerate(expenses):
+            self.table.insertRow(row_idx)
+            for col_idx, data in enumerate(expense):
+                self.table.setItem(row_idx, col_idx, QTableWidgetItem(str(data)))
