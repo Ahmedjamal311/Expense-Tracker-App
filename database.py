@@ -62,3 +62,6 @@ def fetch_category_expenses(category):
         row = [query.value(i) for i in range(5)]
         expenses.append(row)
     return expenses
+
+def fetch_date_expenses(category):
+    return

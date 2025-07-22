@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QLineEdit, QComboBox, QDateEdit, QTableWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QTableWidgetItem, QHeaderView
 
 from PyQt6.QtCore import QDate
-from database import fetch_expenses, add_expenses, delete_expenses, fetch_category_expenses
+from database import fetch_expenses, add_expenses, delete_expenses, fetch_category_expenses, fetch_date_expenses
 
 class ExpenseApp(QWidget):
     def __init__(self):
@@ -35,7 +35,10 @@ class ExpenseApp(QWidget):
         self.filter_dropdown = QComboBox()
         self.filter_dropdown.addItem("All Categories")
         self.filter_dropdown.addItems(["Food", "Rent", "Bills", "Entertainment", "Shopping", "Other"])
-        self.filter_dropdown.currentTextChanged.connect(self.filter_expenses)
+        self.filter_dropdown.currentTextChanged.connect(self.filter_expenses_category)
+
+        self.total_label = QLabel("Total Spent: $0.00")
+        self.total_label.setStyleSheet("font-size: 14px; font-weight: bold;")
 
         self.setup_layout()
         self.show()
@@ -65,6 +68,7 @@ class ExpenseApp(QWidget):
         master.addLayout(row2)
         master.addLayout(row3)
         master.addWidget(self.table)
+        master.addWidget(self.total_label)
 
         self.setLayout(master)
 
@@ -98,6 +102,7 @@ class ExpenseApp(QWidget):
         
         if add_expenses(date, category, amount, description):
             self.load_table_data()
+            self.filter_expenses_category()
             self.clear_inputs()
         else:
             QMessageBox.warning(self, "Error", "Failed to add expense")
@@ -113,8 +118,9 @@ class ExpenseApp(QWidget):
 
         if confirm == QMessageBox.StandardButton.Yes and delete_expenses(expense_id):
             self.load_table_data()
+            self.filter_expenses_category()
     
-    def filter_expenses(self):
+    def filter_expenses_category(self):
         selected_category = self.filter_dropdown.currentText()
         categories = ["Food", "Rent", "Bills", "Entertainment", "Shopping", "Other"]
         if selected_category in categories:
@@ -129,3 +135,18 @@ class ExpenseApp(QWidget):
             self.table.insertRow(row_idx)
             for col_idx, data in enumerate(expense):
                 self.table.setItem(row_idx, col_idx, QTableWidgetItem(str(data)))
+        
+        total = self.calculate_total(expenses)
+        self.total_label.setText(f"Total Spent{' in ' + selected_category if selected_category != 'All Categories' else ''}: ${total:.2f}")
+
+    def calculate_total(self, expenses):
+        total = 0.0
+        for expense in expenses:
+            try:
+                total += float(expense[3])
+            except (ValueError, IndexError):
+                continue
+        return total
+
+    def filter_expenses_date(self):
+        return
