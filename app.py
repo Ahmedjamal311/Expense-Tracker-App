@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QLineEdit, QComboBox, QDateEdit, QTableWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QTableWidgetItem, QHeaderView
+from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QLineEdit, QComboBox, QDateEdit, QTableWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QTableWidgetItem, QHeaderView, QSpinBox, QCheckBox
 
 from PyQt6.QtCore import QDate
-from database import fetch_expenses, add_expenses, delete_expenses, fetch_category_expenses, fetch_date_expenses
+from database import fetch_expenses, add_expenses, delete_expenses, fetch_date_expenses
 
 class ExpenseApp(QWidget):
     def __init__(self):
@@ -9,6 +9,7 @@ class ExpenseApp(QWidget):
         self.settings()
         self.initUI()
         self.load_table_data()
+        self.apply_filters()
     
     def settings(self):
         self.setGeometry(750, 300, 550, 500)
@@ -32,10 +33,29 @@ class ExpenseApp(QWidget):
 
         self.btn_add.clicked.connect(self.add_expense)
         self.btn_delete.clicked.connect(self.delete_expense)
+
         self.filter_dropdown = QComboBox()
         self.filter_dropdown.addItem("All Categories")
         self.filter_dropdown.addItems(["Food", "Rent", "Bills", "Entertainment", "Shopping", "Other"])
-        self.filter_dropdown.currentTextChanged.connect(self.filter_expenses_category)
+        self.filter_dropdown.currentTextChanged.connect(self.apply_filters)
+
+        self.date_filter = QDateEdit()
+        self.date_filter.setDate(QDate.currentDate())
+        self.date_filter.dateChanged.connect(self.apply_filters)
+
+        self.enable_date_filter = QCheckBox("Use Exact Date")
+        self.enable_date_filter.setChecked(False)
+        self.enable_date_filter.stateChanged.connect(self.apply_filters)
+
+        self.month_filter = QComboBox()
+        self.month_filter.addItem("All Months")
+        self.month_filter.addItems(["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"])
+        self.month_filter.currentTextChanged.connect(self.apply_filters)
+
+        self.year_filter = QSpinBox()
+        self.year_filter.setRange(2000, QDate.currentDate().year() + 10)
+        self.year_filter.setValue(QDate.currentDate().year())
+        self.year_filter.valueChanged.connect(self.apply_filters)
 
         self.total_label = QLabel("Total Spent: $0.00")
         self.total_label.setStyleSheet("font-size: 14px; font-weight: bold;")
@@ -53,22 +73,34 @@ class ExpenseApp(QWidget):
         row1.addWidget(self.date_box)
         row1.addWidget(QLabel("Category"))
         row1.addWidget(self.dropdown)
+        row1.addWidget(QLabel("Amount"))
+        row1.addWidget(self.amount)
+        row1.addWidget(QLabel("Description"))
+        row1.addWidget(self.description)
 
-        row2.addWidget(QLabel("Amount"))
-        row2.addWidget(self.amount)
-        row2.addWidget(QLabel("Description"))
-        row2.addWidget(self.description)
-
-        row3.addWidget(self.btn_add)
-        row3.addWidget(self.btn_delete)
-        row3.addWidget(QLabel("Filter by:"))
+        row2.addWidget(self.btn_add)
+        row2.addWidget(self.btn_delete)
+        
+        row3.addWidget(QLabel("Filter Category:"))
         row3.addWidget(self.filter_dropdown)
+        row3.addWidget(self.enable_date_filter)
+        row3.addWidget(QLabel("Filter Date:"))
+        row3.addWidget(self.date_filter)
+        row3.addWidget(QLabel("Filter Month:"))
+        row3.addWidget(self.month_filter)
+        row3.addWidget(QLabel("Filter Year:"))
+        row3.addWidget(self.year_filter)
 
         master.addLayout(row1)
         master.addLayout(row2)
         master.addLayout(row3)
         master.addWidget(self.table)
-        master.addWidget(self.total_label)
+
+        total_layout = QHBoxLayout()
+        total_layout.addStretch()
+        total_layout.addWidget(self.total_label)
+        total_layout.addStretch()
+        master.addLayout(total_layout)
 
         self.setLayout(master)
 
@@ -102,7 +134,7 @@ class ExpenseApp(QWidget):
         
         if add_expenses(date, category, amount, description):
             self.load_table_data()
-            self.filter_expenses_category()
+            self.apply_filters()
             self.clear_inputs()
         else:
             QMessageBox.warning(self, "Error", "Failed to add expense")
@@ -118,27 +150,8 @@ class ExpenseApp(QWidget):
 
         if confirm == QMessageBox.StandardButton.Yes and delete_expenses(expense_id):
             self.load_table_data()
-            self.filter_expenses_category()
+            self.apply_filters()
     
-    def filter_expenses_category(self):
-        selected_category = self.filter_dropdown.currentText()
-        categories = ["Food", "Rent", "Bills", "Entertainment", "Shopping", "Other"]
-        if selected_category in categories:
-            expenses = fetch_category_expenses(selected_category)
-        elif selected_category == "All Categories": 
-            expenses = fetch_expenses()
-        else:
-            QMessageBox.warning(self, "Error", "Category not found")
-            return
-        self.table.setRowCount(0)
-        for row_idx, expense in enumerate(expenses):
-            self.table.insertRow(row_idx)
-            for col_idx, data in enumerate(expense):
-                self.table.setItem(row_idx, col_idx, QTableWidgetItem(str(data)))
-        
-        total = self.calculate_total(expenses)
-        self.total_label.setText(f"Total Spent{' in ' + selected_category if selected_category != 'All Categories' else ''}: ${total:.2f}")
-
     def calculate_total(self, expenses):
         total = 0.0
         for expense in expenses:
@@ -147,6 +160,49 @@ class ExpenseApp(QWidget):
             except (ValueError, IndexError):
                 continue
         return total
+    
+    def apply_filters(self):
+        selected_category = self.filter_dropdown.currentText()
+        selected_month_name = self.month_filter.currentText()
+        selected_year = self.year_filter.value()
 
-    def filter_expenses_date(self):
-        return
+        category_filter = selected_category if selected_category != "All Categories" else None
+
+        if self.enable_date_filter.isChecked():
+            date_filter = self.date_filter.date().toString("yyyy-MM-dd")
+        else:
+            date_filter = None
+
+        month_filter = None
+        year_filter = None
+
+        if selected_month_name != "All Months":
+            month_map = {
+                "January": "01", "February": "02", "March": "03", "April": "04",
+                "May": "05", "June": "06", "July": "07", "August": "08",
+                "September": "09", "October": "10", "November": "11", "December": "12"
+            }
+            month_filter = f"{selected_year}-{month_map[selected_month_name]}"
+        else:
+            year_filter = str(selected_year)
+
+        if date_filter:
+            expenses = fetch_date_expenses(date=date_filter)
+        elif month_filter:
+            expenses = fetch_date_expenses(month=month_filter)
+        elif year_filter:
+            expenses = fetch_date_expenses(year=year_filter)
+        else:
+            expenses = fetch_expenses()
+
+        if category_filter:
+            expenses = [e for e in expenses if e[2] == category_filter]
+
+        self.table.setRowCount(0)
+        for row_idx, expense in enumerate(expenses):
+            self.table.insertRow(row_idx)
+            for col_idx, data in enumerate(expense):
+                self.table.setItem(row_idx, col_idx, QTableWidgetItem(str(data)))
+
+        total = self.calculate_total(expenses)
+        self.total_label.setText(f"Total Spent: ${total:.2f}")

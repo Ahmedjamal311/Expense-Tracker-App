@@ -48,10 +48,20 @@ def delete_expenses(expense_id):
     query.addBindValue(expense_id)
     return query.exec()
 
-def fetch_category_expenses(category):
+def fetch_date_expenses(date=None, month=None, year=None):
     query = QSqlQuery()
-    query.prepare("SELECT * FROM expenses WHERE category = :category ORDER BY date DESC")
-    query.bindValue(":category", category)
+
+    if date:
+        query.prepare("SELECT * FROM expenses WHERE date = :date ORDER BY date DESC")
+        query.bindValue(":date", date)
+    elif month:
+        query.prepare("SELECT * FROM expenses WHERE date LIKE :month || '%' ORDER BY date DESC")
+        query.bindValue(":month", month)
+    elif year:
+        query.prepare("SELECT * FROM expenses WHERE date LIKE :year || '%' ORDER BY date DESC")
+        query.bindValue(":year", year)
+    else:
+        query.prepare("SELECT * FROM expenses ORDER BY date DESC")
 
     if not query.exec():
         print("Query failed:", query.lastError().text())
@@ -61,7 +71,5 @@ def fetch_category_expenses(category):
     while query.next():
         row = [query.value(i) for i in range(5)]
         expenses.append(row)
-    return expenses
 
-def fetch_date_expenses(category):
-    return
+    return expenses
