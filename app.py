@@ -113,21 +113,19 @@ class ExpenseApp(QWidget):
         self.table.setRowCount(0)
         for row_idx, expense in enumerate(expenses):
             self.table.insertRow(row_idx)
-            for row_idx, expense in enumerate(expenses):
-                self.table.insertRow(row_idx)
-                for col_idx, data in enumerate(expense):
-                    if col_idx == 3:
-                        try:
-                            amount = float(data)
-                            if amount.is_integer():
-                                formatted = f"${int(amount)}"
-                            else:
-                                formatted = f"${amount:.2f}"
-                        except:
-                            formatted = str(data)
+            for col_idx, data in enumerate(expense):
+                if col_idx == 3:
+                    try:
+                        amount = float(data)
+                        if amount.is_integer():
+                            formatted = f"${int(amount)}"
+                        else:
+                            formatted = f"${amount:.2f}"
+                    except:
+                        formatted = str(data)
                         self.table.setItem(row_idx, col_idx, QTableWidgetItem(formatted))
-                    else:
-                        self.table.setItem(row_idx, col_idx, QTableWidgetItem(str(data)))
+                else:
+                    self.table.setItem(row_idx, col_idx, QTableWidgetItem(str(data)))
 
     def clear_inputs(self):
         self.date_box.setDate(QDate.currentDate())
@@ -179,7 +177,10 @@ class ExpenseApp(QWidget):
         selected_month_name = self.month_filter.currentText()
         selected_year = self.year_filter.value()
 
-        category_filter = selected_category if selected_category != "All Categories" else None
+        if selected_category != "All Categories":
+            category_filter = selected_category
+        else:
+            category_filter = None
 
         if self.enable_date_filter.isChecked():
             date_filter = self.date_filter.date().toString("yyyy-MM-dd")
